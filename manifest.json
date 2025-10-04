@@ -1,7 +1,7 @@
 {
   "domain": "custom_hue_popup",
   "name": "Custom Hue Popup",
-  "version": "1.0.0",
+  "version": "1.2.3",
   "frontend": true,
   "type": "module",
   "resources": [
@@ -19,3 +19,4 @@
     }
   ]
 }
+
