@@ -1,5 +1,6 @@
 {
   "name": "Custom Hue Popup",
+  "version": "1.0.0",
   "content_in_root": true,
   "filename": "custom_hue_popup.js",
   "render_readme": true,
