@@ -1,0 +1,21 @@
+{
+  "domain": "custom_hue_popup",
+  "name": "Custom Hue Popup",
+  "version": "1.0.0",
+  "frontend": true,
+  "type": "module",
+  "resources": [
+    {
+      "type": "module",
+      "url": "/local/custom_hue_popup/custom_hue_popup.js"
+    },
+    {
+      "type": "module",
+      "url": "/local/custom_hue_popup/hue-controls.js"
+    },
+    {
+      "type": "css",
+      "url": "/local/custom_hue_popup/style.css"
+    }
+  ]
+}
