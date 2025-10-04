@@ -5,14 +5,13 @@ import { customElement, property } from 'https://unpkg.com/lit/decorators.js?mod
 @customElement('custom-hue-popup')
 class CustomHuePopup extends LitElement {
   @property({type: Object}) hass;
-  @property({type: Object}) entities = []; // multiple lights
+  @property({type: Object}) entities = [];
   @property({type: Boolean}) opened = false;
 
-  // Store unsubscribe functions for state listeners
   stateUnsubs = [];
 
   render() {
-    if(!this.opened) return html``;
+    if (!this.opened) return html``;
     return html`
       <div class="custom-hue-popup-backdrop" @click=${() => this.close()}>
         <div class="custom-hue-popup-card" @click=${e => e.stopPropagation()}>
@@ -30,7 +29,6 @@ class CustomHuePopup extends LitElement {
     this.entities = entity_ids.map(id => hass.states[id]).filter(Boolean);
     this.opened = true;
 
-    // Subscribe to state updates
     this.unsubscribeAll();
     this.entities.forEach(entity => {
       const unsub = hass.connection.subscribeEvents(e => {
@@ -56,13 +54,18 @@ class CustomHuePopup extends LitElement {
   }
 }
 
-// Register service once HA frontend is loaded
+// Wait for HA frontend to load
 window.addEventListener('DOMContentLoaded', () => {
   const popup = document.createElement('custom-hue-popup');
   document.body.appendChild(popup);
 
-  const hass = document.querySelector('home-assistant').hass;
-  hass.callService = hass.callService || (()=>{});
+  const ha = document.querySelector('home-assistant');
+  if (!ha) return;
+
+  const hass = ha.hass;
+
+  // Register as a real HA frontend service
+  hass.callService = hass.callService || (() => {});
 
   hass.services.register('custom_hue_popup', 'open', (call) => {
     let ids = Array.isArray(call.data.entity_id) ? call.data.entity_id : [call.data.entity_id];
