@@ -11,32 +11,13 @@ class CustomHuePopup extends LitElement {
   stateUnsubs = [];
 
   static styles = css`
-    .custom-hue-popup-backdrop {
-      position: fixed;
-      top:0; left:0; right:0; bottom:0;
-      background: rgba(0,0,0,0.5);
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      z-index:9999;
-    }
-    .custom-hue-popup-card {
-      background: var(--card-background-color, white);
-      border-radius: 12px;
-      padding:16px;
-      min-width:280px;
-      max-width:500px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-    }
-    .custom-hue-popup-card h3 {
-      margin:0 0 8px 0;
-      font-size:1.1em;
-    }
+    .custom-hue-popup-backdrop { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.5); display:flex; justify-content:center; align-items:center; z-index:9999; }
+    .custom-hue-popup-card { background: var(--card-background-color, white); border-radius:12px; padding:16px; min-width:280px; max-width:500px; box-shadow:0 2px 10px rgba(0,0,0,0.3); }
+    .custom-hue-popup-card h3 { margin:0 0 8px 0; font-size:1.1em; }
   `;
 
   render() {
     if (!this.opened) return html``;
-
     return html`
       <div class="custom-hue-popup-backdrop" @click=${()=>this.close()}>
         <div class="custom-hue-popup-card" @click=${e=>e.stopPropagation()}>
@@ -50,51 +31,61 @@ class CustomHuePopup extends LitElement {
   }
 
   open(hass, entity_ids) {
+    if(!hass) {
+      console.error('HA object not found!');
+      return;
+    }
+    console.log('Opening popup for entities:', entity_ids);
     this.hass = hass;
-    this.entities = entity_ids.map(id=>hass.states[id]).filter(Boolean);
+    this.entities = entity_ids.map(id => hass.states[id]).filter(Boolean);
     this.opened = true;
-
     this.unsubscribeAll();
-    this.entities.forEach(entity => {
+    this.entities.forEach(entity=>{
       const unsub = hass.connection.subscribeEvents(e=>{
         const newState = hass.states[entity.entity_id];
         if(newState){
-          entity.state=newState.state;
-          entity.attributes=newState.attributes;
+          entity.state = newState.state;
+          entity.attributes = newState.attributes;
           this.requestUpdate();
         }
       }, 'state_changed');
       this.stateUnsubs.push(unsub);
     });
+    this.requestUpdate();
   }
 
-  close() {
-    this.opened=false;
-    this.unsubscribeAll();
-  }
+  close() { this.opened=false; this.unsubscribeAll(); }
 
-  unsubscribeAll() {
-    this.stateUnsubs.forEach(unsub=>unsub());
-    this.stateUnsubs=[];
-  }
+  unsubscribeAll() { this.stateUnsubs.forEach(unsub=>unsub()); this.stateUnsubs=[]; }
 }
 
-// Create popup element
+// Initialize popup element
 const popup = document.createElement('custom-hue-popup');
 document.body.appendChild(popup);
 
-// Listen for fire-dom-event
-document.addEventListener('custom_hue_popup', e=>{
-  const entity_ids = e.detail.entity_id || [];
+// Wait until Home Assistant is loaded
+const waitForHA = () => {
   const ha = document.querySelector('home-assistant');
-  if(!ha || !ha.hass) return;
-  popup.open(ha.hass, Array.isArray(entity_ids)?entity_ids:[entity_ids]);
-});
+  if(ha && ha.hass){
+    window.hass = ha.hass; // store globally for debugging
+    console.log('HA detected, attaching event listeners');
+    
+    // Listen for fire-dom-event
+    document.addEventListener('custom_hue_popup', e=>{
+      const entity_ids = e.detail.entity_id || [];
+      console.log('custom_hue_popup event fired:', entity_ids);
+      popup.open(ha.hass, Array.isArray(entity_ids)?entity_ids:[entity_ids]);
+    });
 
-// Listen for "hue-screen" style hold_action
-document.addEventListener('hue-screen', e=>{
-  const entity_ids = e.detail.entity_id || [];
-  const ha = document.querySelector('home-assistant');
-  if(!ha || !ha.hass) return;
-  popup.open(ha.hass, Array.isArray(entity_ids)?entity_ids:[entity_ids]);
-});
+    // Listen for Hue-like hold_action
+    document.addEventListener('hue-screen', e=>{
+      const entity_ids = e.detail.entity_id || [];
+      console.log('hue-screen event fired:', entity_ids);
+      popup.open(ha.hass, Array.isArray(entity_ids)?entity_ids:[entity_ids]);
+    });
+
+  } else {
+    setTimeout(waitForHA, 500);
+  }
+};
+waitForHA();
