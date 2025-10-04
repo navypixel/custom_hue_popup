@@ -1,0 +1,8 @@
+{
+  "name": "Custom Hue Popup",
+  "content_in_root": true,
+  "filename": "custom_hue_popup.js",
+  "render_readme": true,
+  "homeassistant": "2024.6.0",
+  "zip_release": false
+}
